@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qr code generator for free</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #a5b4fc, #f5d0fe);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-y: auto;
+    }
+    .container {
+      max-width: 40rem;
+      width: 100%;
+      margin: 2rem;
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      padding: 2.5rem;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #qrCanvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.75rem;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    #logoPreview {
+      max-width: 120px;
+      max-height: 120px;
+      display: none;
+      margin-top: 1.5rem;
+      border-radius: 0.5rem;
+    }
+    .gradient-btn {
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .gradient-btn:hover {
+      background: linear-gradient(to right, #4f46e5, #9333ea);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .gradient-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300%;
+      height: 300%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.5s ease;
+    }
+    .gradient-btn:hover::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .tooltip {
+      position: relative;
+    }
+    .tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: white;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-8">Super Nice QR Code Generator</h1>
+    <div class="space-y-6">
+      <div>
+        <label for="qrType" class="block text-sm font-medium text-gray-700">QR Code Type</label>
+        <select id="qrType" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="url">URL</option>
+          <option value="vcard">vCard</option>
+          <option value="wifi">Wi-Fi</option>
+        </select>
+      </div>
+      <div id="urlInput" class="input-group">
+        <label for="textInput" class="block text-sm font-medium text-gray-700">Enter URL</label>
+        <input id="textInput" type="text" placeholder="https://example.com" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+      <div id="vcardInput" class="input-group hidden space-y-4">
+        <div>
+          <label for="vcardName" class="block text-sm font-medium text-gray-700">Full Name</label>
+          <input id="vcardName" type="text" placeholder="John Doe" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="vcardPhone" class="block text-sm font-medium text-gray-700">Phone</label>
+          <input id="vcardPhone" type="tel" placeholder="+1234567890" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="vcardEmail" class="block text-sm font-medium text-gray-700">Email</label>
+          <input id="vcardEmail" type="email" placeholder="john@example.com" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+      </div>
+      <div id="wifiInput" class="input-group hidden space-y-4">
+        <div>
+          <label for="wifiSSID" class="block text-sm font-medium text-gray-700">Wi-Fi SSID</label>
+          <input id="wifiSSID" type="text" placeholder="MyWiFi" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="wifiPassword" class="block text-sm font-medium text-gray-700">Password</label>
+          <input id="wifiPassword" type="text" placeholder="Password" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="fgColor" class="block text-sm font-medium text-gray-700">Foreground Color</label>
+          <input id="fgColor" type="color" value="#000000" class="mt-1 w-full h-10 border rounded-md">
+        </div>
+        <div>
+          <label for="bgColor" class="block text-sm font-medium text-gray-700">Background Color</label>
+          <input id="bgColor" type="color" value="#ffffff" class="mt-1 w-full h-10 border rounded-md">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="size" class="block text-sm font-medium text-gray-700">QR Code Size (px)</label>
+          <input id="size" type="number" min="100" max="500" value="200" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="errorCorrection" class="block text-sm font-medium text-gray-700">Error Correction</label>
+          <select id="errorCorrection" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <option value="L">Low</option>
+            <option value="M" selected>Medium</option>
+            <option value="Q">High</option>
+            <option value="H">Highest</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="patternStyle" class="block text-sm font-medium text-gray-700">Pattern Style</label>
+        <select id="patternStyle" class="mt-1 w-full p-3 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <option value="square">Square</option>
+          <option value="dots">Dots</option>
+          <option value="rounded">Rounded Squares</option>
+        </select>
+      </div>
+      <div>
+        <label for="logoInput" class="block text-sm font-medium text-gray-700">Upload Logo (optional)</label>
+        <input id="logoInput" type="file" accept="image/*" class="mt-1 w-full p-3 border rounded-md">
+        <img id="logoPreview" alt="Logo Preview">
+      </div>
+      <button id="generateBtn" class="w-full gradient-btn text-white py-3 rounded-md tooltip" data-tooltip="Click to create your QR code">Generate QR Code</button>
+      <div id="qrCode" class="flex justify-center mt-6"></div>
+      <div class="grid grid-cols-3 gap-4">
+        <button id="downloadPngBtn" class="gradient-btn text-white py-2 rounded-md hidden tooltip" data-tooltip="Download as PNG">Download PNG</button>
+        <button id="downloadSvgBtn" class="gradient-btn text-white py-2 rounded-md hidden tooltip" data-tooltip="Download as SVG">Download SVG</button>
+        <button id="downloadJpgBtn" class="gradient-btn text-white py-2 rounded-md hidden tooltip" data-tooltip="Download as JPEG">Download JPEG</button>
+      </div>
+      <div id="preview" class="mt-4 text-center text-sm text-gray-600 hidden">
+        <p>Preview: <a id="previewLink" href="#" target="_blank" class="text-indigo-600 underline"></a></p>
+      </div>
+      <div id="analytics" class="mt-6 p-4 bg-gray-50 rounded-md hidden">
+        <h2 class="text-lg font-semibold text-gray-800">Mock Analytics</h2>
+        <p>Scans: <span id="scanCount">0</span></p>
+        <p>Last Scan: <span id="lastScan">N/A</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const qrType = document.getElementById('qrType');
+    const urlInput = document.getElementById('urlInput');
+    const vcardInput = document.getElementById('vcardInput');
+    const wifiInput = document.getElementById('wifiInput');
+    const textInput = document.getElementById('textInput');
+    const vcardName = document.getElementById('vcardName');
+    const vcardPhone = document.getElementById('vcardPhone');
+    const vcardEmail = document.getElementById('vcardEmail');
+    const wifiSSID = document.getElementById('wifiSSID');
+    const wifiPassword = document.getElementById('wifiPassword');
+    const fgColor = document.getElementById('fgColor');
+    const bgColor = document.getElementById('bgColor');
+    const size = document.getElementById('size');
+    const errorCorrection = document.getElementById('errorCorrection');
+    const patternStyle = document.getElementById('patternStyle');
+    const logoInput = document.getElementById('logoInput');
+    const logoPreview = document.getElementById('logoPreview');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadPngBtn = document.getElementById('downloadPngBtn');
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    const downloadJpgBtn = document.getElementById('downloadJpgBtn');
+    const preview = document.getElementById('preview');
+    const previewLink = document.getElementById('previewLink');
+    const analytics = document.getElementById('analytics');
+    const scanCount = document.getElementById('scanCount');
+    const lastScan = document.getElementById('lastScan');
+    const qrCodeDiv = document.getElementById('qrCode');
+    let qrCode = null;
+
+    // Toggle input fields based on QR type
+    qrType.addEventListener('change', () => {
+      urlInput.classList.add('hidden');
+      vcardInput.classList.add('hidden');
+      wifiInput.classList.add('hidden');
+      if (qrType.value === 'url') urlInput.classList.remove('hidden');
+      if (qrType.value === 'vcard') vcardInput.classList.remove('hidden');
+      if (qrType.value === 'wifi') wifiInput.classList.remove('hidden');
+    });
+
+    // Show logo preview
+    logoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        logoPreview.src = URL.createObjectURL(file);
+        logoPreview.style.display = 'block';
+      } else {
+        logoPreview.style.display = 'none';
+      }
+    });
+
+    // Generate QR code
+    generateBtn.addEventListener('click', () => {
+      let qrText = '';
+      if (qrType.value === 'url') {
+        if (!textInput.value) {
+          alert('Please enter a URL.');
+          return;
+        }
+        qrText = textInput.value;
+      } else if (qrType.value === 'vcard') {
+        if (!vcardName.value || !vcardPhone.value || !vcardEmail.value) {
+          alert('Please fill in all vCard fields.');
+          return;
+        }
+        qrText = `BEGIN:VCARD\nVERSION:3.0\nN:${vcardName.value}\nTEL:${vcardPhone.value}\nEMAIL:${vcardEmail.value}\nEND:VCARD`;
+      } else if (qrType.value === 'wifi') {
+        if (!wifiSSID.value || !wifiPassword.value) {
+          alert('Please fill in all Wi-Fi fields.');
+          return;
+        }
+        qrText = `WIFI:S:${wifiSSID.value};T:WPA;P:${wifiPassword.value};;`;
+      }
+
+      qrCodeDiv.innerHTML = ''; // Clear previous QR code
+      qrCode = new QRCode(qrCodeDiv, {
+        text: qrText,
+        width: parseInt(size.value),
+        height: parseInt(size.value),
+        colorDark: fgColor.value,
+        colorLight: bgColor.value,
+        correctLevel: QRCode.CorrectLevel[errorCorrection.value]
+      });
+
+      // Apply pattern style
+      setTimeout(() => {
+        const canvas = qrCodeDiv.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixelSize = parseInt(size.value) / 30;
+
+        if (patternStyle.value === 'dots' || patternStyle.value === 'rounded') {
+          for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+              const i = (y * canvas.width + x) * 4;
+              if (imageData.data[i] === 0 && imageData.data[i + 3] === 255) {
+                ctx.beginPath();
+                if (patternStyle.value === 'dots') {
+                  ctx.arc(x, y, pixelSize / 4, 0, Math.PI * 2);
+                } else {
+                  ctx.rect(x - pixelSize / 4, y - pixelSize / 4, pixelSize / 2, pixelSize / 2);
+                  ctx.arc(x, y, pixelSize / 4, 0, Math.PI * 2);
+                }
+                ctx.fillStyle = fgColor.value;
+                ctx.fill();
+              }
+            }
+          }
+        }
+
+        // Add logo if uploaded
+        if (logoInput.files[0]) {
+          const logo = new Image();
+          logo.src = logoPreview.src;
+          logo.onload = () => {
+            const logoSize = parseInt(size.value) * 0.2;
+            const logoX = (canvas.width - logoSize) / 2;
+            const logoY = (canvas.height - logoSize) / 2;
+            ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+            showDownloadButtons();
+          };
+        } else {
+          showDownloadButtons();
+        }
+      }, 100);
+
+      // Show preview link
+      if (qrType.value === 'url' && qrText.startsWith('http')) {
+        previewLink.href = qrText;
+        previewLink.textContent = qrText;
+        preview.classList.remove('hidden');
+      } else {
+        preview.classList.add('hidden');
+      }
+
+      // Mock analytics
+      analytics.classList.remove('hidden');
+      scanCount.textContent = Math.floor(Math.random() * 100);
+      lastScan.textContent = new Date().toLocaleString();
+    });
+
+    // Show download buttons
+    function showDownloadButtons() {
+      downloadPngBtn.classList.remove('hidden');
+      downloadSvgBtn.classList.remove('hidden');
+      downloadJpgBtn.classList.remove('hidden');
+    }
+
+    // Download PNG
+    downloadPngBtn.addEventListener('click', () => {
+      const canvas = qrCodeDiv.querySelector('canvas');
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'qrcode.png';
+      link.click();
+    });
+
+    // Download SVG
+    downloadSvgBtn.addEventListener('click', () => {
+      const canvas = qrCodeDiv.querySelector('canvas');
+      const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
+        <foreignObject width="100%" height="100%">
+          <div xmlns="http://www.w3.org/1999/xhtml">
+            <img src="${canvas.toDataURL('image/png')}" width="${canvas.width}" height="${canvas.height}"/>
+          </div>
+        </foreignObject>
+      </svg>`;
+      const link = document.createElement('a');
+      link.href = 'data:image/svg+xml;base64,' + btoa(svgData);
+      link.download = 'qrcode.svg';
+      link.click();
+    });
+
+    // Download JPEG
+    downloadJpgBtn.addEventListener('click', () => {
+      const canvas = qrCodeDiv.querySelector('canvas');
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/jpeg', 0.9);
+      link.download = 'qrcode.jpg';
+      link.click();
+    });
+  </script>
+</body>
+</html>
